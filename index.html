@@ -1,82 +1,133 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Coin Toss Game</title>
-  <!-- Include ethers.js from CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+  <meta charset="UTF-8">
+  <title>Integrated Coin Toss Game</title>
+  <!-- Import ethers.js from a CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    input, button { padding: 5px; margin: 5px 0; }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .container { max-width: 400px; margin: auto; }
+    input, button { width: 100%; padding: 10px; margin: 5px 0; }
+    label { margin-right: 10px; }
   </style>
 </head>
 <body>
-  <h1>Coin Toss Game</h1>
-  <p>Select your side:</p>
-  <label>
-    <input type="radio" name="guess" value="true" /> Heads
-  </label>
-  <label>
-    <input type="radio" name="guess" value="false" /> Tails
-  </label>
-  <p>
-    Bet Amount (ETH): <input type="number" id="betAmount" value="0.01" step="0.01" min="0.01" />
-  </p>
-  <button id="tossButton">Toss Coin</button>
-  <div id="result"></div>
+  <div class="container">
+    <h2>Integrated Coin Toss Game</h2>
+    <p><strong>Contract Address:</strong> 0xCA65Df209683C8b181eCFad5698f7254C6877Ce8</p>
+    <p><strong>Network:</strong> Monad Testnet (Chain ID: 10143)</p>
+    <p><strong>Symbol:</strong> MON</p>
+    <button id="connectButton">Connect Wallet</button>
+    
+    <div id="walletInfo" style="display:none;">
+      <p>Connected Account: <span id="accountAddress"></span></p>
+      <input type="number" id="betAmount" placeholder="Enter bet amount in MON" step="0.01" min="0" />
+      <div>
+        <label>
+          <input type="radio" name="guess" value="true" checked> Heads
+        </label>
+        <label>
+          <input type="radio" name="guess" value="false"> Tails
+        </label>
+      </div>
+      <button id="tossButton">Toss Coin</button>
+      <pre id="result"></pre>
+    </div>
+  </div>
 
   <script>
-    // Replace with your deployed contract's address and ABI
-    const contractAddress = "0xYourContractAddressHere";
+    // Contract details
+    const contractAddress = "0xCA65Df209683C8b181eCFad5698f7254C6877Ce8";
     const contractABI = [
-      // Replace the array below with your contract ABI
-      // Example:
-      // "function tossCoin(bool guess) public payable",
-      // "event CoinTossResult(address indexed player, bool guess, bool result, uint256 betAmount)"
+      "function tossCoin(bool guess) public payable",
+      "event CoinTossResult(address indexed player, bool guess, bool result, uint256 betAmount)"
     ];
 
-    // Connect to the user's MetaMask wallet
+    let provider, signer, coinTossContract;
+
+    // Connect to MetaMask wallet
     async function connectWallet() {
       if (window.ethereum) {
-        await window.ethereum.request({ method: 'eth_requestAccounts' });
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
-        return { provider, signer };
+        try {
+          await window.ethereum.request({ method: 'eth_requestAccounts' });
+          provider = new ethers.providers.Web3Provider(window.ethereum);
+          signer = provider.getSigner();
+
+          // Check if we're on the correct network (Monad Testnet - Chain ID 10143)
+          const network = await provider.getNetwork();
+          if (network.chainId !== 10143) {
+            try {
+              // Request network switch to Monad Testnet (chainId 0x279F in hexadecimal)
+              await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: '0x279F' }],
+              });
+            } catch (switchError) {
+              console.error("Network switch error:", switchError);
+              alert("Please switch to Monad Testnet (Chain ID: 10143) in your wallet.");
+              return;
+            }
+          }
+          
+          document.getElementById("walletInfo").style.display = "block";
+          const account = await signer.getAddress();
+          document.getElementById("accountAddress").innerText = account;
+
+          // Initialize the contract
+          coinTossContract = new ethers.Contract(contractAddress, contractABI, signer);
+          
+          // Listen for CoinTossResult events to display results
+          coinTossContract.on("CoinTossResult", (player, guess, result, betAmount, event) => {
+            const formattedBet = ethers.utils.formatEther(betAmount);
+            const outcome = result ? "Heads" : "Tails";
+            const userGuess = guess ? "Heads" : "Tails";
+            document.getElementById("result").innerText =
+              `Player: ${player}\nYour Guess: ${userGuess}\nResult: ${outcome}\nBet: ${formattedBet} MON`;
+          });
+        } catch (error) {
+          console.error("Wallet connection error:", error);
+          alert("Failed to connect wallet.");
+        }
       } else {
-        alert("MetaMask is not installed. Please install it to use this dApp.");
-        throw new Error("MetaMask not installed");
+        alert("MetaMask is not installed. Please install MetaMask to continue.");
       }
     }
 
-    // Get a contract instance using ethers.js
-    async function getContract() {
-      const { signer } = await connectWallet();
-      return new ethers.Contract(contractAddress, contractABI, signer);
-    }
-
-    document.getElementById('tossButton').addEventListener('click', async () => {
-      const guessRadio = document.querySelector('input[name="guess"]:checked');
-      if (!guessRadio) {
-        alert("Please select Heads or Tails.");
+    // Function to toss the coin with the bet and guess provided by the user
+    async function tossCoin() {
+      const betAmountInput = document.getElementById("betAmount").value;
+      if (!betAmountInput || isNaN(betAmountInput) || Number(betAmountInput) <= 0) {
+        alert("Please enter a valid bet amount in MON.");
         return;
       }
-      const guess = (guessRadio.value === "true");
-      const betAmount = document.getElementById('betAmount').value;
+      // Convert bet amount from MON to wei
+      const betAmount = ethers.utils.parseEther(betAmountInput.toString());
+      
+      // Get the user's guess from radio buttons (true for Heads, false for Tails)
+      const guessRadios = document.getElementsByName("guess");
+      let guessValue;
+      for (const radio of guessRadios) {
+        if (radio.checked) {
+          guessValue = (radio.value === "true");
+          break;
+        }
+      }
       
       try {
-        const contract = await getContract();
-        const betInWei = ethers.utils.parseEther(betAmount);
-        
-        // Call the tossCoin function with the player's guess and send the bet amount
-        const tx = await contract.tossCoin(guess, { value: betInWei });
-        document.getElementById('result').innerText = "Transaction sent. Waiting for confirmation...";
-        const receipt = await tx.wait();
-        document.getElementById('result').innerText = "Transaction confirmed: " + receipt.transactionHash;
+        // Call the tossCoin function of the contract with the bet value
+        const tx = await coinTossContract.tossCoin(guessValue, { value: betAmount });
+        document.getElementById("result").innerText = "Transaction sent. Waiting for confirmation...";
+        await tx.wait();
+        document.getElementById("result").innerText += "\nTransaction confirmed. Awaiting event result...";
       } catch (error) {
-        console.error(error);
-        document.getElementById('result').innerText = "Error: " + error.message;
+        console.error("Transaction error:", error);
+        alert("Transaction failed: " + error.message);
       }
-    });
+    }
+
+    document.getElementById("connectButton").addEventListener("click", connectWallet);
+    document.getElementById("tossButton").addEventListener("click", tossCoin);
   </script>
 </body>
 </html>
