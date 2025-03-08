@@ -14,15 +14,12 @@
 </head>
 <body>
   <div class="container">
-    <h2>Flip Flip Flipp</h2>
-    <p><strong>Contract Address:</strong> 0xCA65Df209683C8b181eCFad5698f7254C6877Ce8</p>
-    <p><strong>Network:</strong> Monad Testnet (Chain ID: 10143)</p>
-    <p><strong>Symbol:</strong> MON</p>
+    <h2>Flip Flip Flip MON</h2>
     <button id="connectButton">Connect Wallet</button>
     
     <div id="walletInfo" style="display:none;">
       <p>Connected Account: <span id="accountAddress"></span></p>
-      <input type="number" id="betAmount" placeholder="Enter bet amount in MON" step="0.01" min="0" />
+      <input type="number" id="betAmount" placeholder="Enter bet amount in MON" min="0" />
       <div>
         <label>
           <input type="radio" name="guess" value="true" checked> Heads
@@ -38,7 +35,7 @@
 
   <script>
     // Contract details
-    const contractAddress = "0xCA65Df209683C8b181eCFad5698f7254C6877Ce8";
+    const contractAddress = "0xAb0B38B7ade22263E39eec47d26A4e144E44C6be";
     const contractABI = [
       "function tossCoin(bool guess) public payable",
       "event CoinTossResult(address indexed player, bool guess, bool result, uint256 betAmount)"
