@@ -1,26 +1,91 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Integrated Coin Toss Game</title>
+  <title>Flip Flip Flip MONAD</title>
+  <!-- Import Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <!-- Use ethers.js UMD build version 6 -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.1/dist/ethers.umd.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    .container { max-width: 400px; margin: auto; }
-    input, button { width: 100%; padding: 10px; margin: 5px 0; }
-    label { margin-right: 10px; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #2c3e50, #4ca1af);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+    p {
+      font-size: 0.9rem;
+      margin: 10px 0;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      margin: 15px 0;
+      font-size: 1rem;
+    }
+    button {
+      background: linear-gradient(135deg, #4ca1af, #2c3e50);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      margin-bottom: 15px;
+    }
+    button:hover {
+      background: linear-gradient(135deg, #2c3e50, #4ca1af);
+    }
+    .radio-group {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .radio-group label {
+      margin: 0 10px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    pre {
+      background: #f4f4f4;
+      border-radius: 6px;
+      padding: 15px;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="card">
     <h2>Flip Flip Flip MONAD</h2>
     <button id="connectButton">Connect Wallet</button>
-    
     <div id="walletInfo" style="display:none;">
-      <p>Connected Account: <span id="accountAddress"></span></p>
+      <p><strong>Connected Account:</strong> <span id="accountAddress"></span></p>
       <input type="number" id="betAmount" placeholder="Enter bet amount in MON" min="0" />
-      <div>
+      <div class="radio-group">
         <label>
           <input type="radio" name="guess" value="true" checked> Heads
         </label>
