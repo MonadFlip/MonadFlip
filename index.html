@@ -194,7 +194,7 @@
       try {
         // Call the tossCoin function of the contract with the bet value
         // Set gasLimit manually to 120k
-        const tx = await coinTossContract.tossCoin(guessValue, { value: betAmount, gasLimit: 120000 });
+        const tx = await coinTossContract.tossCoin(guessValue, { value: betAmount, gasLimit: 60000 });
         document.getElementById("result").innerText = "Transaction sent. Waiting for confirmation...";
         
         // Add a 5-second delay after sending the transaction
