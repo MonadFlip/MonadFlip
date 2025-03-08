@@ -2,9 +2,9 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Integrated Coin Toss Game - Monad Edition</title>
-  <!-- Use the UMD build of ethers.js -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.umd.min.js"></script>
+  <title>Integrated Coin Toss Game</title>
+  <!-- Use ethers.js UMD build version 6 -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.1/dist/ethers.umd.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
     .container { max-width: 400px; margin: auto; }
@@ -14,7 +14,7 @@
 </head>
 <body>
   <div class="container">
-    <h2>Integrated Coin Toss Game</h2>
+    <h2>Flip Flip Flipp</h2>
     <p><strong>Contract Address:</strong> 0xCA65Df209683C8b181eCFad5698f7254C6877Ce8</p>
     <p><strong>Network:</strong> Monad Testnet (Chain ID: 10143)</p>
     <p><strong>Symbol:</strong> MON</p>
@@ -46,19 +46,20 @@
 
     let provider, signer, coinTossContract;
 
-    // Connect to MetaMask wallet
+    // Connect to MetaMask wallet using ethers v6
     async function connectWallet() {
       if (window.ethereum) {
         try {
           await window.ethereum.request({ method: 'eth_requestAccounts' });
-          provider = new ethers.providers.Web3Provider(window.ethereum);
-          signer = provider.getSigner();
+          // ethers v6: use BrowserProvider instead of Web3Provider
+          provider = new ethers.BrowserProvider(window.ethereum);
+          signer = await provider.getSigner();
 
-          // Check if we're on the correct network (Monad Testnet - Chain ID: 10143)
+          // Check network – ensuring it's the Monad Testnet (Chain ID: 10143)
           const network = await provider.getNetwork();
           if (network.chainId !== 10143) {
             try {
-              // Request network switch to Monad Testnet (chainId 0x279F in hexadecimal)
+              // Request a network switch to Monad Testnet (chainId '0x279F' in hexadecimal)
               await window.ethereum.request({
                 method: 'wallet_switchEthereumChain',
                 params: [{ chainId: '0x279F' }],
@@ -74,12 +75,12 @@
           const account = await signer.getAddress();
           document.getElementById("accountAddress").innerText = account;
 
-          // Initialize the contract
+          // Initialize the contract with the signer
           coinTossContract = new ethers.Contract(contractAddress, contractABI, signer);
           
           // Listen for CoinTossResult events to display results
           coinTossContract.on("CoinTossResult", (player, guess, result, betAmount, event) => {
-            const formattedBet = ethers.utils.formatEther(betAmount);
+            const formattedBet = ethers.formatEther(betAmount);
             const outcome = result ? "Heads" : "Tails";
             const userGuess = guess ? "Heads" : "Tails";
             document.getElementById("result").innerText =
@@ -101,8 +102,8 @@
         alert("Please enter a valid bet amount in MON.");
         return;
       }
-      // Convert bet amount from MON to wei
-      const betAmount = ethers.utils.parseEther(betAmountInput.toString());
+      // Convert the bet amount from MON to wei using ethers v6
+      const betAmount = ethers.parseEther(betAmountInput.toString());
       
       // Get the user's guess from radio buttons (true for Heads, false for Tails)
       const guessRadios = document.getElementsByName("guess");
