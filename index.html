@@ -84,7 +84,7 @@
 </head>
 <body>
   <div class="card">
-    <h2>Flip Flip Flip MONAD</h2>
+    <h2>Coin Toss MONAD</h2>
     <button id="connectButton">Connect Wallet</button>
     <div id="walletInfo" style="display:none;">
       <p><strong>Connected Account:</strong> <span id="accountAddress"></span></p>
@@ -196,6 +196,10 @@
         // Set gasLimit manually to 120k
         const tx = await coinTossContract.tossCoin(guessValue, { value: betAmount, gasLimit: 120000 });
         document.getElementById("result").innerText = "Transaction sent. Waiting for confirmation...";
+        
+        // Add a 5-second delay after sending the transaction
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
         await tx.wait();
         document.getElementById("result").innerText += "\nTransaction confirmed. Awaiting event result...";
       } catch (error) {
