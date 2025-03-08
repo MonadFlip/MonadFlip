@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Coin Toss Game</title>
+  <!-- Include ethers.js from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    input, button { padding: 5px; margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <h1>Coin Toss Game</h1>
+  <p>Select your side:</p>
+  <label>
+    <input type="radio" name="guess" value="true" /> Heads
+  </label>
+  <label>
+    <input type="radio" name="guess" value="false" /> Tails
+  </label>
+  <p>
+    Bet Amount (ETH): <input type="number" id="betAmount" value="0.01" step="0.01" min="0.01" />
+  </p>
+  <button id="tossButton">Toss Coin</button>
+  <div id="result"></div>
+
+  <script>
+    // Replace with your deployed contract's address and ABI
+    const contractAddress = "0xYourContractAddressHere";
+    const contractABI = [
+      // Replace the array below with your contract ABI
+      // Example:
+      // "function tossCoin(bool guess) public payable",
+      // "event CoinTossResult(address indexed player, bool guess, bool result, uint256 betAmount)"
+    ];
+
+    // Connect to the user's MetaMask wallet
+    async function connectWallet() {
+      if (window.ethereum) {
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        return { provider, signer };
+      } else {
+        alert("MetaMask is not installed. Please install it to use this dApp.");
+        throw new Error("MetaMask not installed");
+      }
+    }
+
+    // Get a contract instance using ethers.js
+    async function getContract() {
+      const { signer } = await connectWallet();
+      return new ethers.Contract(contractAddress, contractABI, signer);
+    }
+
+    document.getElementById('tossButton').addEventListener('click', async () => {
+      const guessRadio = document.querySelector('input[name="guess"]:checked');
+      if (!guessRadio) {
+        alert("Please select Heads or Tails.");
+        return;
+      }
+      const guess = (guessRadio.value === "true");
+      const betAmount = document.getElementById('betAmount').value;
+      
+      try {
+        const contract = await getContract();
+        const betInWei = ethers.utils.parseEther(betAmount);
+        
+        // Call the tossCoin function with the player's guess and send the bet amount
+        const tx = await contract.tossCoin(guess, { value: betInWei });
+        document.getElementById('result').innerText = "Transaction sent. Waiting for confirmation...";
+        const receipt = await tx.wait();
+        document.getElementById('result').innerText = "Transaction confirmed: " + receipt.transactionHash;
+      } catch (error) {
+        console.error(error);
+        document.getElementById('result').innerText = "Error: " + error.message;
+      }
+    });
+  </script>
+</body>
+</html>
