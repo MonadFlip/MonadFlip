@@ -195,7 +195,7 @@
             const outcome = result ? "Heads" : "Tails";
             const userGuess = guess ? "Heads" : "Tails";
             document.getElementById("result").innerText =
-              `Your Guess: ${userGuess}\nResult: ${outcome}\nWin: ${winAmount} MON (${formattedBet} MON -> ${winAmount} MON) - x${multiplier} bet amount if win`;
+              `Your Guess: ${userGuess}\nResult: ${outcome}\nWin: ${winAmount} MON (${formattedBet} MON -> ${winAmount} MON)`;
           });
         } catch (error) {
           console.error("Wallet connection error:", error);
