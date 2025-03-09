@@ -108,7 +108,7 @@
     <button id="connectButton">Connect Wallet</button>
     <div id="walletInfo" style="display:none;">
       <p><strong>Connected Account:</strong> <span id="accountAddress"></span></p>
-      <!-- Thêm mục hiển thị số dư -->
+      <!-- Mục hiển thị số dư -->
       <p><strong>Balance:</strong> <span id="balance"></span> MON</p>
       <input type="number" id="betAmount" placeholder="Enter bet amount in MON" min="0" />
       <div class="radio-group">
@@ -133,8 +133,18 @@
     ];
 
     let provider, signer, coinTossContract;
+    let connectedAccount = "";
 
-    // Connect to MetaMask wallet using ethers v6
+    // Hàm cập nhật số dư (làm tròn đến 2 chữ số thập phân)
+    async function updateBalance() {
+      if (connectedAccount) {
+        const balance = await provider.getBalance(connectedAccount);
+        const formattedBalance = parseFloat(ethers.formatEther(balance)).toFixed(2);
+        document.getElementById("balance").innerText = formattedBalance;
+      }
+    }
+
+    // Kết nối ví và cập nhật số dư liên tục
     async function connectWallet() {
       if (window.ethereum) {
         try {
@@ -157,15 +167,21 @@
           }
           
           document.getElementById("walletInfo").style.display = "block";
-          const account = await signer.getAddress();
-          document.getElementById("accountAddress").innerText = account;
-          // Lấy số dư của người dùng
-          const balance = await provider.getBalance(account);
-          document.getElementById("balance").innerText = ethers.formatEther(balance);
+          // Ẩn nút Connect Wallet sau khi kết nối
+          document.getElementById("connectButton").style.display = "none";
+          
+          connectedAccount = await signer.getAddress();
+          document.getElementById("accountAddress").innerText = connectedAccount;
+          // Cập nhật số dư ngay sau khi kết nối
+          updateBalance();
+          // Cập nhật số dư liên tục mỗi 5 giây
+          setInterval(updateBalance, 5000);
           
           coinTossContract = new ethers.Contract(contractAddress, contractABI, signer);
           
+          // Lắng nghe sự kiện và chỉ hiển thị nếu sự kiện thuộc về người dùng đã kết nối
           coinTossContract.on("CoinTossResult", (player, guess, result, betAmount, event) => {
+            if (player.toLowerCase() !== connectedAccount.toLowerCase()) return;
             const formattedBet = ethers.formatEther(betAmount);
             let winAmount, multiplier;
             if (result === guess) {
@@ -209,7 +225,7 @@
       try {
         const tx = await coinTossContract.tossCoin(guessValue, { value: betAmount, gasLimit: 120000 });
         document.getElementById("result").innerText = "Transaction sent. Waiting for confirmation...";
-        // Thêm delay 5 giây
+        // Delay 5 giây
         await new Promise(resolve => setTimeout(resolve, 5000));
         await tx.wait();
         document.getElementById("result").innerText += "\nTransaction confirmed. Awaiting event result...";
